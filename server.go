@@ -1,71 +1,47 @@
 package main
 
 import (
-	"encoding/json"
+	"database/sql"
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/Seymour-creates/budget-server/db"
+	"github.com/Seymour-creates/budget-server/router"
+	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv"
 	"log"
-	"net/http"
+	"os"
 )
 
-type apiFunc func(http.ResponseWriter, *http.Request) error
+func main() {
 
-type APIError struct {
-	Error string
-}
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbName := os.Getenv("DB_NAME")
+	dbPort := os.Getenv("DB_PORT")
+	dbHost := os.Getenv("DB_HOST")
+	port := os.Getenv("PORT")
+	println("env variables: ", dbHost)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+		dbUser,
+		dbPass,
+		dbHost,
+		dbPort,
+		dbName,
+	)
 
-type APIServer struct {
-	listenAddr string
-}
-
-func makeHTTPHandleFunc(f apiFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := f(w, r); err != nil {
-			WriteJSON(w, http.StatusBadRequest, APIError{Error: err.Error()})
+	database := db.InitDB(dsn)
+	defer func(database *sql.DB) {
+		fmt.Printf("Closing db connection...")
+		err := database.Close()
+		if err != nil {
+			log.Fatal(err.Error())
 		}
+	}(database)
+
+	srv := router.NewServer()
+	if err := srv.Run(port); err != nil {
+		log.Fatal("Server failed to start:", err)
 	}
-}
-
-func WriteJSON(w http.ResponseWriter, status int, value any) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	return json.NewEncoder(w).Encode(value)
-}
-
-func NewAPIServer(listenAddr string) *APIServer {
-	return &APIServer{
-		listenAddr: listenAddr,
-	}
-}
-
-func (s *APIServer) Run() {
-	router := mux.NewRouter()
-	router.HandleFunc("/add_expense", makeHTTPHandleFunc(s.handleAddExpense)).Methods("POST")
-	router.HandleFunc("/compare", makeHTTPHandleFunc(s.handleCompareForecastToExpenditure)).Methods("GET")
-	log.Printf("Server running on port: %s", s.listenAddr)
-	if err := http.ListenAndServe(s.listenAddr, router); err != nil {
-		log.Fatalf("Error starting server: %s", err)
-	}
-}
-
-func (s *APIServer) handleAddExpense(w http.ResponseWriter, r *http.Request) error {
-	return nil
-}
-
-func (s *APIServer) handleMonthlyForecast(w http.ResponseWriter, r *http.Request) error {
-	return nil
-}
-
-func (s *APIServer) handleGenerateSummary(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != "GET" {
-		return fmt.Errorf("method not allowed %s", r.Method)
-	}
-	return nil
-}
-
-func (s *APIServer) handleCompareForecastToExpenditure(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != "GET" {
-		return fmt.Errorf("method not allowed %s", r.Method)
-	}
-	return WriteJSON(w, http.StatusOK, "Go go gadget!")
 }
