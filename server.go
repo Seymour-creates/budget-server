@@ -1,9 +1,8 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/Seymour-creates/budget-server/db"
+	db2 "github.com/Seymour-creates/budget-server/db"
 	"github.com/Seymour-creates/budget-server/router"
 	"github.com/joho/godotenv"
 	_ "github.com/joho/godotenv"
@@ -18,27 +17,18 @@ func main() {
 	}
 	dbUser := os.Getenv("DB_USER")
 	dbPass := os.Getenv("DB_PASS")
-	dbName := os.Getenv("DB_NAME")
 	dbPort := os.Getenv("DB_PORT")
 	dbHost := os.Getenv("DB_HOST")
-	port := os.Getenv("PORT")
-	println("env variables: ", dbHost)
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
-		dbUser,
-		dbPass,
-		dbHost,
-		dbPort,
-		dbName,
-	)
+	dbName := os.Getenv("DB_NAME")
 
-	database := db.InitDB(dsn)
-	defer func(database *sql.DB) {
-		fmt.Printf("Closing db connection...")
-		err := database.Close()
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-	}(database)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbPort, dbName)
+	if err := os.Setenv("DSN", dsn); err != nil {
+		log.Printf("Error setting env variable DSN: --> %v", err)
+	}
+	if err := db2.InitDB(dsn); err != nil {
+		log.Fatalf("Error connecting to database: %v", err)
+	}
+	port := os.Getenv("PORT")
 
 	srv := router.NewServer()
 	if err := srv.Run(port); err != nil {
