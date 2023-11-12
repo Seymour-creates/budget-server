@@ -5,22 +5,28 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
+	"sync"
 )
 
-var db *sql.DB
+var (
+	db   *sql.DB
+	once sync.Once
+)
 
 func InitDB(dataSourceName string) error {
-	var err error
-	println("datasource name: ", dataSourceName)
-	db, err = sql.Open("mysql", dataSourceName)
-	if err != nil {
-		log.Fatalf("Failed to open database: %v", err)
-	}
+	once.Do(func() {
+		var err error
+		println("datasource name: ", dataSourceName)
+		db, err = sql.Open("mysql", dataSourceName)
+		if err != nil {
+			log.Fatalf("Failed to open database: %v", err)
+		}
 
-	log.Printf("successfully connected to db...")
-	if err = db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
-	}
+		log.Printf("successfully connected to db...")
+		if err = db.Ping(); err != nil {
+			log.Fatalf("Failed to ping database: %v", err)
+		}
+	})
 	return nil
 }
 

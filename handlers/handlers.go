@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func Compare(w http.ResponseWriter, r *http.Request) error {
+func GetCompare(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return fmt.Errorf("method not allowed")
 	}
@@ -21,7 +21,7 @@ func Compare(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func AddExpense(w http.ResponseWriter, r *http.Request) error {
+func PostExpense(w http.ResponseWriter, r *http.Request) error {
 	db := db2.GetDB()
 	if r.Method != http.MethodPost {
 		utils.WriteError(w, http.StatusMethodNotAllowed, "Method Not Allowed")
@@ -61,4 +61,26 @@ func AddExpense(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	return nil
-} // ... other handlers
+}
+
+func GetExpensesSummary(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		return fmt.Errorf("method not allowed")
+	}
+	_, err := fmt.Fprintf(w, "Comparison handled")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return nil
+}
+
+func PostForecast(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodGet {
+		return fmt.Errorf("method not allowed")
+	}
+	_, err := fmt.Fprintf(w, "Comparison handled")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	return nil
+}

@@ -19,8 +19,10 @@ func NewServer() *Server {
 }
 
 func (s *Server) registerRoutes() {
-	s.mux.HandleFunc("/add_expense", utils.ErrorHandler(handlers.AddExpense))
-	s.mux.HandleFunc("/compare", utils.ErrorHandler(handlers.Compare))
+	s.mux.HandleFunc("/get_summary", utils.ErrorHandler(handlers.GetExpensesSummary))
+	s.mux.HandleFunc("/get_compare", utils.ErrorHandler(handlers.GetCompare))
+	s.mux.HandleFunc("/post_expense", utils.ErrorHandler(handlers.PostExpense))
+	s.mux.HandleFunc("/post_forecast", utils.ErrorHandler(handlers.PostForecast))
 	// ... other routes
 }
 
