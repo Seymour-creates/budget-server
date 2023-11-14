@@ -16,7 +16,6 @@ var (
 func InitDB(dataSourceName string) error {
 	once.Do(func() {
 		var err error
-		println("datasource name: ", dataSourceName)
 		db, err = sql.Open("mysql", dataSourceName)
 		if err != nil {
 			log.Fatalf("Failed to open database: %v", err)

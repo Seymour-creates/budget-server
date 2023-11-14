@@ -17,6 +17,11 @@ type Forecast struct {
 	Category string  `json:"category"`
 }
 
+type MonthlyBudgetInsights struct {
+	Expenses []Expense  `json:"expenses"`
+	Forecast []Forecast `json:"forecast"`
+}
+
 type APIFunc func(w http.ResponseWriter, r *http.Request) error
 
 type ErrorResponse struct {
