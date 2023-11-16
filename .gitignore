@@ -38,4 +38,6 @@ Thumbs.db
 # IDE and editor folders #
 ##########################
 .idea/
+*.env
+docker-compose.yml
 *~

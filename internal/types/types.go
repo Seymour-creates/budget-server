@@ -24,7 +24,12 @@ type MonthlyBudgetInsights struct {
 
 type APIFunc func(w http.ResponseWriter, r *http.Request) error
 
-type ErrorResponse struct {
-	Status  int    `json:"status"`
-	Message string `json:"message"`
+type HTTPError struct {
+	StatusCode int    `json:"status_code"`
+	Message    string `json:"message"`
+}
+
+// Error implements the error interface.
+func (e *HTTPError) Error() string {
+	return e.Message
 }

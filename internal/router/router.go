@@ -1,8 +1,8 @@
 package router
 
 import (
-	"github.com/Seymour-creates/budget-server/handlers"
-	"github.com/Seymour-creates/budget-server/utils"
+	"github.com/Seymour-creates/budget-server/internal/handlers"
+	"github.com/Seymour-creates/budget-server/internal/utils"
 	"net/http"
 )
 

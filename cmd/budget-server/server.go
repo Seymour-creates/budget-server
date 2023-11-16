@@ -1,8 +1,9 @@
 package main
 
 import (
-	db2 "github.com/Seymour-creates/budget-server/db"
-	"github.com/Seymour-creates/budget-server/router"
+	"fmt"
+	db2 "github.com/Seymour-creates/budget-server/internal/db"
+	"github.com/Seymour-creates/budget-server/internal/router"
 	"github.com/joho/godotenv"
 	_ "github.com/joho/godotenv"
 	"log"
@@ -12,10 +13,11 @@ import (
 func main() {
 
 	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
+		log.Print("No dev.env file found")
 	}
-	dsn := os.Getenv("DSN")
 
+	dsn := os.Getenv("DSN")
+	fmt.Println("Data source name? :", dsn)
 	if err := db2.InitDB(dsn); err != nil {
 		log.Fatalf("Error connecting to database: %v", err)
 	}
