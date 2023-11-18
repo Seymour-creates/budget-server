@@ -39,5 +39,5 @@ Thumbs.db
 ##########################
 .idea/
 *.env
-docker-compose.yml
+configs
 *~
