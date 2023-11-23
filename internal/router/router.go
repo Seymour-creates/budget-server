@@ -23,6 +23,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/get_compare", utils.ErrorHandler(handlers.GetCompare))
 	s.mux.HandleFunc("/post_expense", utils.ErrorHandler(handlers.PostExpense))
 	s.mux.HandleFunc("/post_forecast", utils.ErrorHandler(handlers.PostForecast))
+	s.mux.HandleFunc("/link_cheddar", utils.ErrorHandler(handlers.LinkBank))
 	// ... other routes
 }
 

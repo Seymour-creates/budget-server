@@ -18,6 +18,8 @@ services:
       - "3000:3000"
     env_file:
       - configs/dev.env
+    volumes:
+      - .:/app
     depends_on:
       - db
 volumes:

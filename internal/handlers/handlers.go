@@ -6,7 +6,10 @@ import (
 	db2 "github.com/Seymour-creates/budget-server/internal/db"
 	"github.com/Seymour-creates/budget-server/internal/types"
 	"github.com/Seymour-creates/budget-server/internal/utils"
+	"github.com/plaid/plaid-go/plaid"
+	"html/template"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -68,4 +71,49 @@ func PostExpense(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return utils.WriteJSON(w, map[string]string{"status": "success"})
+}
+
+func LinkBank(w http.ResponseWriter, r *http.Request) error {
+
+	// Initialize the Plaid client
+	clientOptions := plaid.NewConfiguration()
+	clientOptions.AddDefaultHeader("PLAID-CLIENT-ID", os.Getenv("PLAID_CLIENT_ID"))
+	clientOptions.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
+
+	// Use plaid.Development or plaid.Production depending on your environment
+	clientOptions.UseEnvironment(plaid.Sandbox)
+	client := plaid.NewAPIClient(clientOptions)
+
+	// Specify the user
+	user := plaid.LinkTokenCreateRequestUser{
+		ClientUserId: os.Getenv("USER_ID"),
+	} // Replace with the actual user ID
+
+	// Specify the configuration for the Link token
+	request := plaid.NewLinkTokenCreateRequest("XAT", "en", []plaid.CountryCode{plaid.COUNTRYCODE_US}, user)
+	request.SetProducts([]plaid.Products{plaid.PRODUCTS_AUTH, plaid.PRODUCTS_TRANSACTIONS})
+	//request.SetWebhook("https://webhook-uri.com")
+	//request.SetRedirectUri("https://domainname.com/oauth-page.html")
+	request.SetAccountFilters(plaid.LinkTokenAccountFilters{
+		Depository: &plaid.DepositoryFilter{
+			AccountSubtypes: []plaid.AccountSubtype{
+				plaid.ACCOUNTSUBTYPE_CHECKING,
+				plaid.ACCOUNTSUBTYPE_SAVINGS,
+			},
+		},
+	})
+
+	// Create the Link token
+	resp, _, err := client.PlaidApi.LinkTokenCreate(r.Context()).LinkTokenCreateRequest(*request).Execute()
+	if err != nil {
+		return utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error generating plaid client: %v", err))
+	}
+	linkToken := resp.GetLinkToken()
+	// Print the Link token
+	fmt.Println("Link token:", linkToken)
+	data := map[string]interface{}{
+		"LinkToken": linkToken,
+	}
+	tmpl := template.Must(template.ParseFiles("internal/templates/link_bank.html"))
+	return tmpl.Execute(w, data)
 }
