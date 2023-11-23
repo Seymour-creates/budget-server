@@ -21,8 +21,5 @@ git clone https://github.com/Seymour-creates/budget-server.git
 # navigate to the cloned repository
 cd budget-server
 
-# build the server
-go build
-
-# run the server
-./budget-server
+# run the server using docker-compose command from root
+docker-compose up -d --build
