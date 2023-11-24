@@ -8,10 +8,26 @@ import (
 	"github.com/Seymour-creates/budget-server/internal/utils"
 	"github.com/plaid/plaid-go/plaid"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"time"
 )
+
+var client *plaid.APIClient
+
+func getPlaidClient() *plaid.APIClient {
+	if client == nil {
+		clientOptions := plaid.NewConfiguration()
+		clientOptions.AddDefaultHeader("PLAID-CLIENT-ID", os.Getenv("PLAID_CLIENT_ID"))
+		clientOptions.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
+
+		// Use plaid.Development or plaid.Production depending on your environment
+		clientOptions.UseEnvironment(plaid.Sandbox)
+		client = plaid.NewAPIClient(clientOptions)
+	}
+	return client
+}
 
 func GetCompare(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
@@ -74,15 +90,10 @@ func PostExpense(w http.ResponseWriter, r *http.Request) error {
 }
 
 func LinkBank(w http.ResponseWriter, r *http.Request) error {
-
-	// Initialize the Plaid client
-	clientOptions := plaid.NewConfiguration()
-	clientOptions.AddDefaultHeader("PLAID-CLIENT-ID", os.Getenv("PLAID_CLIENT_ID"))
-	clientOptions.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
-
-	// Use plaid.Development or plaid.Production depending on your environment
-	clientOptions.UseEnvironment(plaid.Sandbox)
-	client := plaid.NewAPIClient(clientOptions)
+	if r.Method != http.MethodGet {
+		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method not allowed.")
+	}
+	client = getPlaidClient()
 
 	// Specify the user
 	user := plaid.LinkTokenCreateRequestUser{
@@ -116,4 +127,32 @@ func LinkBank(w http.ResponseWriter, r *http.Request) error {
 	}
 	tmpl := template.Must(template.ParseFiles("internal/templates/link_bank.html"))
 	return tmpl.Execute(w, data)
+}
+
+func CreateItem(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != http.MethodPost {
+		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method not allowed.")
+	}
+	log.Println("making it here to create the item")
+	if err := r.ParseForm(); err != nil {
+		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error parsing incoming form: %v", err))
+	}
+	client = getPlaidClient()
+	publicToken := r.FormValue("public_token")
+	errorMessage := r.FormValue("error_message")
+
+	if errorMessage != "" {
+		return utils.NewHTTPError(http.StatusExpectationFailed, fmt.Sprintf("Error fetching public token from link: %v", errorMessage))
+	}
+
+	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(publicToken)
+	exchangedToken, _, err := client.PlaidApi.ItemPublicTokenExchange(r.Context()).ItemPublicTokenExchangeRequest(*exchangePublicTokenReq).Execute()
+	if err != nil {
+		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error exchanging public token for access token: %v", err))
+	}
+
+	accessToken := exchangedToken.GetAccessToken()
+
+	log.Printf("Access Token: %v", accessToken)
+	return utils.WriteJSON(w, accessToken)
 }

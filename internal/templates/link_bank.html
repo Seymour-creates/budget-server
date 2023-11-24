@@ -1,26 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Plaid Link Demo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XAT Link</title>
     <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
     <script src="https://unpkg.com/htmx.org"></script>
+    <!-- Include Tailwind CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-<button id="link-button">Connect with Plaid</button>
-<form hx-post="/your-endpoint" hx-swap="outerHTML" id="plaid-form">
-    <input type="hidden" name="public_token" id="public-token">
-</form>
+<body class="bg-gray-800 text-gray-100">
+
+<!-- Navbar -->
+<nav class="bg-gray-900 shadow w-full">
+    <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+        <a class="font-bold text-xl text-gray-100" href="#">XAT Budget </a>
+        <img src="../assets/XAT_LOGO.png" alt="XAT Logo" class="h-40 w-40 mr-2 rounded-full"/>
+        <div class="flex">
+            <a class="text-gray-300 hover:text-gray-100 ml-4" href="#">Link 1</a>
+            <a class="text-gray-300 hover:text-gray-100 ml-4" href="#">Link 2</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-3 min-h-screen">
+    <!-- Left Transparent Column -->
+    <div class="bg-gray-800 bg-opacity-50"></div>
+
+    <!-- Center Content Column -->
+    <div class="col-span-1 flex p-20 items-start">
+        <div class="bg-gray-700 p-20 border border-gray-600 rounded-lg shadow-lg text-center">
+            <h1 class="text-2xl md:text-4xl lg:text-6xl font-semibold mb-4">Welcome to XAT</h1>
+            <p class="text-base md:text-xl lg:text-3xl mb-4">A personal finance app. Click below to register your bank account with our service for automated forecasting updates.</p>
+            <button id="link-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded">
+                Connect with Plaid
+            </button>
+<!--            <form hx-post="/create_item" hx-swap="outerHTML" id="plaid-form" class="mt-4">-->
+<!--            </form>-->
+            <button id="post-token" class="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded"
+                hx-post="/create_item"
+                hx-include="#plaid-container"
+                hx-swap="outerHTML">
+                Post PubToken
+            </button>
+            <div id="plaid-container">
+                <input type="hidden" name="public_token" id="public-token" value="">
+                <input type="hidden" name="error_message" id="error_message" value="">
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Right Transparent Column -->
+    <div class="bg-gray-800 bg-opacity-50"></div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-gray-900 shadow w-full">
+    <div class="container mx-auto px-6 py-4">
+        <p class="text-gray-300 text-center">XAT © 2023</p>
+    </div>
+</footer>
+
+
 <script type="text/javascript">
     var linkHandler = Plaid.create({
-        token: '{{.LinkToken}}', // Replace with the link token from your server
+        token: "{{.LinkToken}}", // Replace with the link token from your server
         onSuccess: function(public_token, metadata) {
             // Set the public_token in the form
-            document.getElementById('public-token').value = public_token;
+            document.getElementById("public-token").value = public_token;
             // Submit the form with HTMX
-            document.getElementById('plaid-form').submit();
+            document.getElementById("post-token").click()
         },
         onExit: function(err, metadata) {
             // Handle the error or the exit event
+            if (err) {
+                document.getElementById("error_message").value = err.error_message
+            }
+            document.getElementById("post-token").click()
         }
     });
 
