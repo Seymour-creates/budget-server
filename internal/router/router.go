@@ -19,10 +19,8 @@ func NewServer() *Server {
 }
 
 func (s *Server) registerRoutes() {
-	// Create file server for serving static files
+	// Create file server and serve static files
 	fs := http.FileServer(http.Dir("./internal/assets"))
-
-	// Handle static files.
 	s.mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	s.mux.HandleFunc("/get_summary", utils.ErrorHandler(handlers.GetExpensesSummary))
@@ -31,6 +29,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/post_forecast", utils.ErrorHandler(handlers.PostForecast))
 	s.mux.HandleFunc("/link_cheddar", utils.ErrorHandler(handlers.LinkBank))
 	s.mux.HandleFunc("/create_item", utils.ErrorHandler(handlers.CreateItem))
+	s.mux.HandleFunc("/transactions", utils.ErrorHandler(handlers.RetrieveTransactions))
 	// ... other routes
 }
 

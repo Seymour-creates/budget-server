@@ -133,7 +133,6 @@ func CreateItem(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method not allowed.")
 	}
-	log.Println("making it here to create the item")
 	if err := r.ParseForm(); err != nil {
 		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error parsing incoming form: %v", err))
 	}
@@ -152,7 +151,54 @@ func CreateItem(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	accessToken := exchangedToken.GetAccessToken()
-
-	log.Printf("Access Token: %v", accessToken)
 	return utils.WriteJSON(w, accessToken)
+}
+
+func UpdateExpenseData(w http.ResponseWriter, r *http.Request) error {
+	fetchedTransactions, err := retrieveTransactions(r)
+	if err != nil {
+		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error fetching transaction data: %v", err))
+	}
+	dbReadyExpenses, err := formatTransactionsToExpenseType(fetchedTransactions)
+	if err != nil {
+		return utils.NewHTTPError(http.StatusInternalServerError, err.Message)
+	}
+	err = insertExpenses(db2.GetDB(), dbReadyExpenses)
+	if err != nil {
+		return utils.NewHTTPError(http.StatusInternalServerError, err.Message)
+	}
+	success := map[string]string{
+		"status": "success",
+	}
+	return utils.WriteJSON(w, success)
+}
+
+func RetrieveTransactions(w http.ResponseWriter, r *http.Request) error {
+
+	client = getPlaidClient()
+	log.Printf("access token used for req: %v", os.Getenv("PLAID_ACCESS_TOKEN"))
+	const dateFormat = "2006-01-02"
+	currentMo := time.Now()
+	startDate := time.Date(currentMo.Year(), currentMo.Month(), 1, 0, 0, 0, 0, currentMo.Location()).Format(dateFormat)
+	endDate := time.Now().Format(dateFormat)
+	isTrue := true
+	request := plaid.NewTransactionsGetRequest(os.Getenv("PLAID_ACCESS_TOKEN"), startDate, endDate)
+	options := plaid.TransactionsGetRequestOptions{
+		IncludePersonalFinanceCategoryBeta: &isTrue,
+		Offset:                             plaid.PtrInt32(0),
+		Count:                              plaid.PtrInt32(100),
+	}
+	request.SetOptions(options)
+	transaction, _, err := client.PlaidApi.TransactionsGet(r.Context()).TransactionsGetRequest(*request).Execute()
+	if err != nil {
+		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error requesting transctions from plaid: %v", err))
+	}
+	trans := transaction.Transactions
+	for _, action := range trans {
+		log.Printf("category: %v, name: %v, date: %v, amount: %v", action.Category, action.Name, action.Date, action.Amount)
+	}
+	resp := map[string]string{
+		"status": "success",
+	}
+	return utils.WriteJSON(w, resp)
 }

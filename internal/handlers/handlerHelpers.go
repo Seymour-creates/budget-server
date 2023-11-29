@@ -6,7 +6,11 @@ import (
 	"github.com/Seymour-creates/budget-server/internal/db"
 	"github.com/Seymour-creates/budget-server/internal/types"
 	"github.com/Seymour-creates/budget-server/internal/utils"
+	"github.com/plaid/plaid-go/plaid"
+	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -103,4 +107,86 @@ func insertForecast(db *sql.DB, forecast []types.Forecast) *types.HTTPError {
 		}
 	}
 	return nil
+}
+
+func formatTransactionsToExpenseType(transactions []plaid.Transaction) ([]types.Expense, *types.HTTPError) {
+	var expenses []types.Expense
+	for _, action := range transactions {
+		log.Printf("category: %v, name: %v, date: %v, big amount: %v", action.Category, action.Name, action.Date, action.Amount)
+		date, err := time.Parse("2006-01-02", action.Date)
+		// need to find way to intelligently sort expenses into appropriate categories
+		if err != nil {
+			return nil, utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error parsing date: %v", err))
+		}
+		category := cPlaidCategoryToExpense(action.Category)
+		expenses = append(expenses, types.Expense{Description: action.Name, Date: date, Category: category, Amount: float64(action.Amount)})
+	}
+	return expenses, nil
+}
+
+func cPlaidCategoryToExpense(category []string) string {
+	if len(category) == 0 {
+		return "misc"
+	}
+	for _, cat := range category {
+		budgetCategory := getBudgetCategory(cat)
+		if budgetCategory != "misc" {
+			return budgetCategory
+		}
+	}
+	return "misc"
+}
+
+func getBudgetCategory(plaidCategory string) string {
+	categoryMappings := map[string]string{
+		"INCOME":                    "saving",
+		"TRANSFER":                  "bill",
+		"LOAN":                      "debt",
+		"BANK FEES":                 "bill",
+		"ENTERTAINMENT":             "ent",
+		"FOOD AND DRINK":            "takeout",
+		"GENERAL MERCHANDISE":       "misc",
+		"HOME IMPROVEMENT":          "bill",
+		"MEDICAL":                   "bill",
+		"PERSONAL CARE":             "misc",
+		"GENERAL SERVICES":          "bill",
+		"GOVERNMENT AND NON PROFIT": "bill",
+		"TRANSPORTATION":            "bill",
+		"TRAVEL":                    "ent",
+		"RENT AND UTILITIES":        "bill",
+	}
+
+	plaidCategory = strings.ToUpper(plaidCategory)
+	for keyword, category := range categoryMappings {
+		if strings.Contains(plaidCategory, keyword) {
+			return category
+		}
+	}
+	return "misc"
+}
+
+func retrieveTransactions(r *http.Request) ([]plaid.Transaction, *types.HTTPError) {
+	client = getPlaidClient()
+	log.Printf("access token used for req: %v", os.Getenv("PLAID_ACCESS_TOKEN"))
+	const dateFormat = "2006-01-02"
+	currentMo := time.Now()
+	startDate := time.Date(currentMo.Year(), currentMo.Month(), 1, 0, 0, 0, 0, currentMo.Location()).Format(dateFormat)
+	endDate := time.Now().Format(dateFormat)
+	isTrue := true
+	request := plaid.NewTransactionsGetRequest(os.Getenv("PLAID_ACCESS_TOKEN"), startDate, endDate)
+	options := plaid.TransactionsGetRequestOptions{
+		IncludePersonalFinanceCategoryBeta: &isTrue,
+		Offset:                             plaid.PtrInt32(0),
+		Count:                              plaid.PtrInt32(100),
+	}
+	request.SetOptions(options)
+	getTransactionData, _, err := client.PlaidApi.TransactionsGet(r.Context()).TransactionsGetRequest(*request).Execute()
+	if err != nil {
+		return nil, utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error requesting transctions from plaid: %v", err))
+	}
+	transactions := getTransactionData.Transactions
+	for _, action := range transactions {
+		log.Printf("category: %v, name: %v, date: %v, amount: %v", action.Category, action.Name, action.Date, action.Amount)
+	}
+	return transactions, nil
 }
