@@ -103,7 +103,7 @@ func LinkBank(w http.ResponseWriter, r *http.Request) error {
 	request := plaid.NewLinkTokenCreateRequest("XAT", "en", []plaid.CountryCode{plaid.COUNTRYCODE_US}, user)
 	request.SetProducts([]plaid.Products{plaid.PRODUCTS_AUTH, plaid.PRODUCTS_TRANSACTIONS})
 	//request.SetWebhook("https://webhook-uri.com")
-	//request.SetRedirectUri("https://domainname.com/oauth-page.html")
+	request.SetRedirectUri("http://localhost:3000/assets/oauth-after-party.html")
 	request.SetAccountFilters(plaid.LinkTokenAccountFilters{
 		Depository: &plaid.DepositoryFilter{
 			AccountSubtypes: []plaid.AccountSubtype{
