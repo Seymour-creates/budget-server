@@ -103,7 +103,6 @@ func LinkBank(w http.ResponseWriter, r *http.Request) error {
 	request := plaid.NewLinkTokenCreateRequest("XAT", "en", []plaid.CountryCode{plaid.COUNTRYCODE_US}, user)
 	request.SetProducts([]plaid.Products{plaid.PRODUCTS_AUTH, plaid.PRODUCTS_TRANSACTIONS})
 	//request.SetWebhook("https://webhook-uri.com")
-	request.SetRedirectUri("http://localhost:3000/assets/oauth-after-party.html")
 	request.SetAccountFilters(plaid.LinkTokenAccountFilters{
 		Depository: &plaid.DepositoryFilter{
 			AccountSubtypes: []plaid.AccountSubtype{
@@ -112,6 +111,7 @@ func LinkBank(w http.ResponseWriter, r *http.Request) error {
 			},
 		},
 	})
+	request.SetRedirectUri("http://localhost:3000/assets/oauth-after-party.html")
 
 	// Create the Link token
 	resp, _, err := client.PlaidApi.LinkTokenCreate(r.Context()).LinkTokenCreateRequest(*request).Execute()

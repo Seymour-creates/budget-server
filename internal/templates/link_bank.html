@@ -36,8 +36,6 @@
             <button id="link-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded">
                 Connect with Plaid
             </button>
-<!--            <form hx-post="/create_item" hx-swap="outerHTML" id="plaid-form" class="mt-4">-->
-<!--            </form>-->
             <button id="post-token" class="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded"
                 hx-post="/create_item"
                 hx-include="#plaid-container"
@@ -67,6 +65,7 @@
 <script type="text/javascript">
     var linkHandler = Plaid.create({
         token: "{{.LinkToken}}", // Replace with the link token from your server
+        // receivedRedirectUri: window.location.href,
         onSuccess: function(public_token, metadata) {
             // Set the public_token in the form
             document.getElementById("public-token").value = public_token;
