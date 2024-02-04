@@ -3,14 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	db2 "github.com/Seymour-creates/budget-server/internal/db"
-	"github.com/Seymour-creates/budget-server/internal/types"
-	"github.com/Seymour-creates/budget-server/internal/utils"
-	"github.com/plaid/plaid-go/plaid"
 	"html/template"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/Seymour-creates/budget-server/internal/types"
+	"github.com/Seymour-creates/budget-server/internal/utils"
+	"github.com/plaid/plaid-go/plaid"
 )
 
 var client *plaid.APIClient
@@ -46,10 +46,10 @@ func GetExpensesSummary(w http.ResponseWriter, r *http.Request) error {
 	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
-	expenses, err := fetchExpenses(db2.GetDB(), firstOfMonth, lastOfMonth)
-	if err != nil {
-		return err
-	}
+	// expenses, err := fetchExpenses(db2.GetDB(), firstOfMonth, lastOfMonth)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return utils.WriteJSON(w, expenses)
 }
@@ -64,9 +64,9 @@ func PostForecast(w http.ResponseWriter, r *http.Request) error {
 		return utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error converting incoming json: %v", err))
 	}
 
-	if err := insertForecast(db2.GetDB(), forecast); err != nil {
-		return err
-	}
+	// if err := insertForecast(db2.GetDB(), forecast); err != nil {
+	// 	return err
+	// }
 
 	return utils.WriteJSON(w, map[string]string{"status": "success"})
 }
@@ -81,9 +81,9 @@ func PostExpense(w http.ResponseWriter, r *http.Request) error {
 		return utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error decoding incoming expense data: %v", err))
 	}
 
-	if err := insertExpenses(db2.GetDB(), expenses); err != nil {
-		return err
-	}
+	// if err := insertExpenses(db2.GetDB(), expenses); err != nil {
+	// 	return err
+	// }
 
 	return utils.WriteJSON(w, map[string]string{"status": "success"})
 }
@@ -162,10 +162,10 @@ func UpdateExpenseData(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return utils.NewHTTPError(http.StatusInternalServerError, err.Message)
 	}
-	err = insertExpenses(db2.GetDB(), dbReadyExpenses)
-	if err != nil {
-		return utils.NewHTTPError(http.StatusInternalServerError, err.Message)
-	}
+	// err = insertExpenses(db2.GetDB(), dbReadyExpenses)
+	// if err != nil {
+	// 	return utils.NewHTTPError(http.StatusInternalServerError, err.Message)
+	// }
 	success := map[string]string{
 		"status": "success",
 	}

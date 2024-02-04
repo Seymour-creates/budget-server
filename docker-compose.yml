@@ -10,5 +10,3 @@ services:
       - configs/dev.env
     volumes:
       - .:/app
-    depends_on:
-      - db

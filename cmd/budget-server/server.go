@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-
+	log.Printf("stating server!!!!")
 	port := os.Getenv("PORT")
 	srv := router.NewServer()
 

@@ -3,15 +3,15 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Seymour-creates/budget-server/internal/db"
-	"github.com/Seymour-creates/budget-server/internal/types"
-	"github.com/Seymour-creates/budget-server/internal/utils"
-	"github.com/plaid/plaid-go/plaid"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/Seymour-creates/budget-server/internal/types"
+	"github.com/Seymour-creates/budget-server/internal/utils"
+	"github.com/plaid/plaid-go/plaid"
 )
 
 func fetchExpenses(db *sql.DB, start, end time.Time) ([]types.Expense, *types.HTTPError) {
@@ -66,7 +66,7 @@ func fetchForecast(db *sql.DB, period time.Time) ([]types.Forecast, *types.HTTPE
 	return forecast, nil
 }
 
-func getMonthlyBudgetInsights() (*types.MonthlyBudgetInsights, *types.HTTPError) {
+func getMonthlyBudgetInsights(db *sql.DB) (*types.MonthlyBudgetInsights, *types.HTTPError) {
 	now := time.Now()
 	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
