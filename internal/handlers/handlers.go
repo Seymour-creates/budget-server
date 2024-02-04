@@ -28,30 +28,31 @@ func getPlaidClient() *plaid.APIClient {
 	return client
 }
 
-func GetCompare(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodGet {
-		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method Not Allowed")
-	}
+// func GetCompare(w http.ResponseWriter, r *http.Request) error {
+// 	if r.Method != http.MethodGet {
+// 		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method Not Allowed")
+// 	}
 
-	response, err := getMonthlyBudgetInsights()
-	if err != nil {
-		return err
-	}
+// 	response, err := getMonthlyBudgetInsights()
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return utils.WriteJSON(w, response)
-}
+// 	return utils.WriteJSON(w, response)
+// }
 
 func GetExpensesSummary(w http.ResponseWriter, r *http.Request) error {
 	now := time.Now()
-	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+	_ = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	// _ := firstOfMonth.AddDate(0, 1, -1)
 
 	// expenses, err := fetchExpenses(db2.GetDB(), firstOfMonth, lastOfMonth)
 	// if err != nil {
 	// 	return err
 	// }
 
-	return utils.WriteJSON(w, expenses)
+	// return utils.WriteJSON(w, expenses)
+	return nil
 }
 
 func PostForecast(w http.ResponseWriter, r *http.Request) error {
@@ -68,6 +69,10 @@ func PostForecast(w http.ResponseWriter, r *http.Request) error {
 	// 	return err
 	// }
 
+	return utils.WriteJSON(w, map[string]string{"status": "success"})
+}
+
+func GetRight(w http.ResponseWriter, r *http.Request) error {
 	return utils.WriteJSON(w, map[string]string{"status": "success"})
 }
 
@@ -158,7 +163,7 @@ func UpdateExpenseData(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error fetching transaction data: %v", err))
 	}
-	dbReadyExpenses, err := formatTransactionsToExpenseType(fetchedTransactions)
+	_, err = formatTransactionsToExpenseType(fetchedTransactions)
 	if err != nil {
 		return utils.NewHTTPError(http.StatusInternalServerError, err.Message)
 	}

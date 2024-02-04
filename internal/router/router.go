@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/Seymour-creates/budget-server/internal/handlers"
@@ -28,12 +29,14 @@ func (s *Server) registerRoutes() {
 	// s.mux.HandleFunc("/get_compare", utils.ErrorHandler(handlers.GetCompare))
 	// s.mux.HandleFunc("/post_expense", utils.ErrorHandler(handlers.PostExpense))
 	// s.mux.HandleFunc("/post_forecast", utils.ErrorHandler(handlers.PostForecast))
-	s.mux.HandleFunc("/link_cheddar", utils.ErrorHandler(handlers.LinkBank))
+	// s.mux.HandleFunc("/link_cheddar", utils.ErrorHandler(handlers.LinkBank))
+	s.mux.HandleFunc("/main", utils.ErrorHandler(handlers.GetRight))
 	// s.mux.HandleFunc("/create_item", utils.ErrorHandler(handlers.CreateItem))
 	// s.mux.HandleFunc("/refresh_expense_data", utils.ErrorHandler(handlers.UpdateExpenseData))
 	// ... other routes
 }
 
 func (s *Server) Run(port string) error {
+	log.Printf("trying to start svr in router.Run()")
 	return http.ListenAndServe(port, s.mux)
 }

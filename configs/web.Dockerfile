@@ -19,4 +19,4 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./budget-server .
 EXPOSE 3000
 
 # Run the application
-CMD ["go", "run","./cmd/budget-server/server"]
+CMD ["go", "run","./cmd/budget-server/"]

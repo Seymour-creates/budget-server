@@ -66,26 +66,26 @@ func fetchForecast(db *sql.DB, period time.Time) ([]types.Forecast, *types.HTTPE
 	return forecast, nil
 }
 
-func getMonthlyBudgetInsights(db *sql.DB) (*types.MonthlyBudgetInsights, *types.HTTPError) {
-	now := time.Now()
-	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+// func getMonthlyBudgetInsights(db *sql.DB) (*types.MonthlyBudgetInsights, *types.HTTPError) {
+// 	_ := time.Now()
+// 	_ := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+// 	_ := firstOfMonth.AddDate(0, 1, -1)
 
-	expenses, err := fetchExpenses(db.GetDB(), firstOfMonth, lastOfMonth)
-	if err != nil {
-		return nil, err
-	}
+// 	// expenses, err := fetchExpenses(db.GetDB(), firstOfMonth, lastOfMonth)
+// 	// if err != nil {
+// 	// 	return nil, err
+// 	// }
 
-	forecast, err := fetchForecast(db.GetDB(), firstOfMonth)
-	if err != nil {
-		return nil, err
-	}
+// 	// forecast, err := fetchForecast(db.GetDB(), firstOfMonth)
+// 	// if err != nil {
+// 	// 	return nil, err
+// 	// }
 
-	return &types.MonthlyBudgetInsights{
-		Expenses: expenses,
-		Forecast: forecast,
-	}, nil
-}
+// 	return &types.MonthlyBudgetInsights{
+// 		Expenses: expenses,
+// 		Forecast: forecast,
+// 	}, nil
+// }
 
 func insertExpenses(db *sql.DB, expenses []types.Expense) *types.HTTPError {
 	const insertQuery = "INSERT INTO expenses (date, description, amount, categoryID) VALUES (?, ?, ?, ?)"
