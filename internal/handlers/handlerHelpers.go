@@ -66,26 +66,26 @@ func fetchForecast(db *sql.DB, period time.Time) ([]types.Forecast, *types.HTTPE
 	return forecast, nil
 }
 
-// func getMonthlyBudgetInsights(db *sql.DB) (*types.MonthlyBudgetInsights, *types.HTTPError) {
-// 	_ := time.Now()
-// 	_ := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-// 	_ := firstOfMonth.AddDate(0, 1, -1)
-
-// 	// expenses, err := fetchExpenses(db.GetDB(), firstOfMonth, lastOfMonth)
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	// forecast, err := fetchForecast(db.GetDB(), firstOfMonth)
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	return &types.MonthlyBudgetInsights{
-// 		Expenses: expenses,
-// 		Forecast: forecast,
-// 	}, nil
-// }
+//func getMonthlyBudgetInsights(db *sql.DB) (*types.MonthlyBudgetInsights, *types.HTTPError) {
+//	now := time.Now()
+//	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+//	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+//
+//	expenses, err := fetchExpenses(db.GetDB(), firstOfMonth, lastOfMonth)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	forecast, err := fetchForecast(db.GetDB(), firstOfMonth)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return &types.MonthlyBudgetInsights{
+//		Expenses: expenses,
+//		Forecast: forecast,
+//	}, nil
+//}
 
 func insertExpenses(db *sql.DB, expenses []types.Expense) *types.HTTPError {
 	const insertQuery = "INSERT INTO expenses (date, description, amount, categoryID) VALUES (?, ?, ?, ?)"
@@ -182,7 +182,7 @@ func retrieveTransactions(r *http.Request) ([]plaid.Transaction, *types.HTTPErro
 	request.SetOptions(options)
 	getTransactionData, _, err := client.PlaidApi.TransactionsGet(r.Context()).TransactionsGetRequest(*request).Execute()
 	if err != nil {
-		return nil, utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error requesting transctions from plaid: %v", err))
+		return nil, utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error requesting transctions from plaidCtl: %v", err))
 	}
 	transactions := getTransactionData.Transactions
 	for _, action := range transactions {

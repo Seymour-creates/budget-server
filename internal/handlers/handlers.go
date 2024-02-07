@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Seymour-creates/budget-server/internal/db"
+	"github.com/Seymour-creates/budget-server/internal/plaidCtl"
 	"html/template"
 	"net/http"
 	"os"
@@ -15,13 +17,18 @@ import (
 
 var client *plaid.APIClient
 
+type Handler struct {
+	plaid *plaidCtl.Service
+	db    *db.Repository
+}
+
 func getPlaidClient() *plaid.APIClient {
 	if client == nil {
 		clientOptions := plaid.NewConfiguration()
 		clientOptions.AddDefaultHeader("PLAID-CLIENT-ID", os.Getenv("PLAID_CLIENT_ID"))
 		clientOptions.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
 
-		// Use plaid.Development or plaid.Production depending on your environment
+		// Use plaidCtl.Development or plaidCtl.Production depending on your environment
 		clientOptions.UseEnvironment(plaid.Sandbox)
 		client = plaid.NewAPIClient(clientOptions)
 	}
@@ -121,7 +128,7 @@ func LinkBank(w http.ResponseWriter, r *http.Request) error {
 	// Create the Link token
 	resp, _, err := client.PlaidApi.LinkTokenCreate(r.Context()).LinkTokenCreateRequest(*request).Execute()
 	if err != nil {
-		return utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error generating plaid client: %v", err))
+		return utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error generating plaidCtl client: %v", err))
 	}
 	linkToken := resp.GetLinkToken()
 	// Print the Link token

@@ -1,6 +1,8 @@
 package router
 
 import (
+	"database/sql"
+	"github.com/Seymour-creates/budget-server/internal/db"
 	"log"
 	"net/http"
 
@@ -9,12 +11,19 @@ import (
 )
 
 type Server struct {
-	mux *http.ServeMux
+	mux   *http.ServeMux
+	mysql *db.Manager
 }
 
 func NewServer() *Server {
+	mysqlConn, err := sql.Open("mysql", "yourdatasource")
+	if err != nil {
+		log.Printf("error connecting to db: %v", err)
+	}
+	DBManager := db.NewDBManager(mysqlConn)
 	server := &Server{
-		mux: http.NewServeMux(),
+		mux:   http.NewServeMux(),
+		mysql: DBManager,
 	}
 	server.registerRoutes()
 	return server
