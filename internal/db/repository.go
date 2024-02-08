@@ -6,9 +6,9 @@ import (
 )
 
 type Repository interface {
-	fetchExpenses(start, end time.Time) ([]types.Expense, error)
-	fetchForecast(period time.Time) ([]types.Forecast, *types.HTTPError)
-	getMonthlyBudgetInsights() (*types.MonthlyBudgetInsights, *types.HTTPError)
-	insertExpenses(expenses []types.Expense) *types.HTTPError
-	insertForecast(forecast []types.Forecast) *types.HTTPError
+	FetchExpenses(start, end time.Time) ([]types.Expense, *types.HTTPError)
+	FetchForecast(period time.Time) ([]types.Forecast, *types.HTTPError)
+	GetMonthlyBudgetInsights() (*types.MonthlyBudgetInsights, *types.HTTPError)
+	InsertExpenses(expenses []types.Expense) *types.HTTPError
+	InsertForecast(forecast []types.Forecast) *types.HTTPError
 }

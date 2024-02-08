@@ -14,16 +14,16 @@ import (
 )
 
 type Service struct {
-	client *plaid.APIClient
+	Client *plaid.APIClient
 }
 
 func NewService(client *plaid.APIClient) *Service {
 	return &Service{
-		client: client,
+		Client: client,
 	}
 }
 
-func (s *Service) retrieveTransactions(r *http.Request) ([]plaid.Transaction, *types.HTTPError) {
+func (s *Service) RetrieveTransactions(r *http.Request) ([]plaid.Transaction, *types.HTTPError) {
 	log.Printf("access token used for req: %v", os.Getenv("PLAID_ACCESS_TOKEN"))
 	const dateFormat = "2006-01-02"
 	currentMo := time.Now()
@@ -37,7 +37,7 @@ func (s *Service) retrieveTransactions(r *http.Request) ([]plaid.Transaction, *t
 		Count:                              plaid.PtrInt32(100),
 	}
 	request.SetOptions(options)
-	getTransactionData, _, err := s.client.PlaidApi.TransactionsGet(r.Context()).TransactionsGetRequest(*request).Execute()
+	getTransactionData, _, err := s.Client.PlaidApi.TransactionsGet(r.Context()).TransactionsGetRequest(*request).Execute()
 	if err != nil {
 		return nil, utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error requesting transctions from plaidCtl: %v", err))
 	}
@@ -52,7 +52,7 @@ func (s *Service) LinkBank(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method not allowed.")
 	}
-	client := s.client
+	client := s.Client
 
 	// Specify the user
 	user := plaid.LinkTokenCreateRequestUser{
@@ -95,7 +95,7 @@ func (s *Service) CreateItem(w http.ResponseWriter, r *http.Request) error {
 	if err := r.ParseForm(); err != nil {
 		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error parsing incoming form: %v", err))
 	}
-	client := s.client
+	client := s.Client
 	publicToken := r.FormValue("public_token")
 	errorMessage := r.FormValue("error_message")
 
@@ -154,7 +154,7 @@ func cPlaidCategoryToExpense(category []string) string {
 	return "misc"
 }
 
-func formatTransactionsToExpenseType(transactions []plaid.Transaction) ([]types.Expense, *types.HTTPError) {
+func (s *Service) FormatTransactionsToExpenseType(transactions []plaid.Transaction) ([]types.Expense, *types.HTTPError) {
 	var expenses []types.Expense
 	for _, action := range transactions {
 		log.Printf("category: %v, name: %v, date: %v, big amount: %v", action.Category, action.Name, action.Date, action.Amount)

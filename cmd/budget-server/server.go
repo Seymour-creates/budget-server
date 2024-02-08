@@ -12,7 +12,7 @@ func main() {
 	log.Printf("stating server!!!!")
 	port := os.Getenv("PORT")
 	log.Printf("port: %v", port)
-	srv := router.NewServer()
+	srv := router.ConfigServer()
 
 	if err := srv.Run(port); err != nil {
 		log.Fatal("Server failed to start: ", err)

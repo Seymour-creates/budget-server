@@ -19,7 +19,7 @@ func NewDBManager(db *sql.DB) *Manager {
 	return &Manager{db: db}
 }
 
-func (man *Manager) fetchExpenses(start, end time.Time) ([]types.Expense, *types.HTTPError) {
+func (man *Manager) FetchExpenses(start, end time.Time) ([]types.Expense, *types.HTTPError) {
 	const query = `SELECT categoryID, amount, date, description FROM expenses WHERE date >= ? AND date <= ?`
 	rows, err := man.db.Query(query, start, end)
 	if err != nil {
@@ -52,7 +52,7 @@ func (man *Manager) fetchExpenses(start, end time.Time) ([]types.Expense, *types
 	return expenses, nil
 }
 
-func (man *Manager) fetchForecast(period time.Time) ([]types.Forecast, *types.HTTPError) {
+func (man *Manager) FetchForecast(period time.Time) ([]types.Forecast, *types.HTTPError) {
 	const forecastQuery = `SELECT categoryID, amount FROM forecast WHERE period = ?`
 	forecastRows, err := man.db.Query(forecastQuery, period.Format("2006-01-02"))
 	if err != nil {
@@ -80,17 +80,17 @@ func (man *Manager) fetchForecast(period time.Time) ([]types.Forecast, *types.HT
 	return forecast, nil
 }
 
-func (man *Manager) getMonthlyBudgetInsights() (*types.MonthlyBudgetInsights, *types.HTTPError) {
+func (man *Manager) GetMonthlyBudgetInsights() (*types.MonthlyBudgetInsights, *types.HTTPError) {
 	now := time.Now()
 	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
-	expenses, err := man.fetchExpenses(firstOfMonth, lastOfMonth)
+	expenses, err := man.FetchExpenses(firstOfMonth, lastOfMonth)
 	if err != nil {
 		return nil, err
 	}
 
-	forecast, err := man.fetchForecast(firstOfMonth)
+	forecast, err := man.FetchForecast(firstOfMonth)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (man *Manager) getMonthlyBudgetInsights() (*types.MonthlyBudgetInsights, *t
 	}, nil
 }
 
-func (man *Manager) insertExpenses(expenses []types.Expense) *types.HTTPError {
+func (man *Manager) InsertExpenses(expenses []types.Expense) *types.HTTPError {
 	const insertQuery = "INSERT INTO expenses (date, description, amount, categoryID) VALUES (?, ?, ?, ?)"
 	for _, expense := range expenses {
 		_, err := man.db.Exec(insertQuery, expense.Date, expense.Description, expense.Amount, expense.Category)
@@ -112,7 +112,7 @@ func (man *Manager) insertExpenses(expenses []types.Expense) *types.HTTPError {
 	return nil
 }
 
-func (man *Manager) insertForecast(forecast []types.Forecast) *types.HTTPError {
+func (man *Manager) InsertForecast(forecast []types.Forecast) *types.HTTPError {
 	const insertQuery = "INSERT INTO forecast (categoryID, amount) VALUES (?, ?)"
 	for _, f := range forecast {
 		_, err := man.db.Exec(insertQuery, f.Category, f.Amount)
