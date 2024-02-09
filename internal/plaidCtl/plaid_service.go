@@ -5,7 +5,6 @@ import (
 	"github.com/Seymour-creates/budget-server/internal/types"
 	"github.com/Seymour-creates/budget-server/internal/utils"
 	"github.com/plaid/plaid-go/plaid"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -48,10 +47,7 @@ func (s *Service) RetrieveTransactions(r *http.Request) ([]plaid.Transaction, *t
 	return transactions, nil
 }
 
-func (s *Service) LinkBank(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodGet {
-		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method not allowed.")
-	}
+func (s *Service) LinkBank(r *http.Request) (string, error) {
 	client := s.Client
 
 	// Specify the user
@@ -71,21 +67,22 @@ func (s *Service) LinkBank(w http.ResponseWriter, r *http.Request) error {
 			},
 		},
 	})
-	request.SetRedirectUri("http://localhost:3000/assets/oauth-after-party.html")
+	request.SetRedirectUri(os.Getenv("LOCAL_URL") + "/assets/oauth-after-party.html")
 
 	// Create the Link token
 	resp, _, err := client.PlaidApi.LinkTokenCreate(r.Context()).LinkTokenCreateRequest(*request).Execute()
 	if err != nil {
-		return utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error generating plaidCtl client: %v", err))
+		return "", utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error generating plaidCtl client: %v", err))
 	}
 	linkToken := resp.GetLinkToken()
+	return linkToken, nil
 	// Print the Link token
-	fmt.Println("Link token:", linkToken)
-	data := map[string]interface{}{
-		"LinkToken": linkToken,
-	}
-	tmpl := template.Must(template.ParseFiles("internal/templates/link_bank.html"))
-	return tmpl.Execute(w, data)
+	//fmt.Println("Link token:", linkToken)
+	//data := map[string]interface{}{
+	//	"LinkToken": linkToken,
+	//}
+	//tmpl := template.Must(template.ParseFiles("internal/templates/link_bank.html"))
+	//return tmpl.Execute(w, data)
 }
 
 func (s *Service) CreateItem(w http.ResponseWriter, r *http.Request) error {
@@ -110,7 +107,11 @@ func (s *Service) CreateItem(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	accessToken := exchangedToken.GetAccessToken()
-	return utils.WriteJSON(w, accessToken)
+	err = os.Setenv("PLAID_ACCESS_TOKEN", accessToken)
+	if err != nil {
+		log.Printf("Unable to update access token in env file: %v", err)
+	}
+	return utils.WriteJSON(w, map[string]string{"status": "success"})
 }
 
 func getBudgetCategory(plaidCategory string) string {

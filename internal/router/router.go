@@ -1,10 +1,13 @@
 package router
 
 import (
+	"context"
 	"database/sql"
 	"github.com/Seymour-creates/budget-server/internal/db"
 	"github.com/Seymour-creates/budget-server/internal/plaidCtl"
 	"github.com/plaid/plaid-go/plaid"
+	"golang.ngrok.com/ngrok"
+	"golang.ngrok.com/ngrok/config"
 	"log"
 	"net/http"
 	"os"
@@ -24,7 +27,7 @@ func createNewPlaidClient() *plaid.APIClient {
 	clientOptions.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
 
 	// Use plaidCtl.Development or plaidCtl.Production depending on your environment
-	clientOptions.UseEnvironment(plaid.Sandbox)
+	clientOptions.UseEnvironment(plaid.Production)
 	return plaid.NewAPIClient(clientOptions)
 }
 
@@ -61,6 +64,23 @@ func (s *Server) registerRoutes() {
 }
 
 func (s *Server) Run(port string) error {
-	log.Printf("trying to start svr in router.Run()")
-	return http.ListenAndServe(port, s.mux)
+	ctx := context.Background()
+
+	// Set up ngrok configuration and start a tunnel
+	ngrokConfig := config.HTTPEndpoint()
+
+	// Authenticate with ngrok using your auth token stored in an environment variable
+	listener, err := ngrok.Listen(ctx, ngrokConfig, ngrok.WithAuthtoken(os.Getenv("NGROK_AUTH_TOKEN")))
+	if err != nil {
+		log.Fatalf("Failed to start ngrok tunnel: %v", err)
+		return err
+	}
+
+	// Log the public ngrok URL
+	log.Printf("ngrok tunnel started: %s", listener.URL())
+	_ = os.Setenv("LOCAL_URL", listener.URL())
+	// Start your HTTP server using the ngrok listener instead of ListenAndServe
+	// Note: Depending on your setup, you might need to adapt how your server is started
+	return http.Serve(listener, s.mux)
+	//return http.ListenAndServe(port, s.mux)
 }

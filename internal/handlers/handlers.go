@@ -7,7 +7,6 @@ import (
 	"github.com/Seymour-creates/budget-server/internal/plaidCtl"
 	"html/template"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/Seymour-creates/budget-server/internal/types"
@@ -98,33 +97,11 @@ func (h *Handler) LinkBank(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method not allowed.")
 	}
-	client := h.plaid.Client
 
-	// Specify the user
-	user := plaid.LinkTokenCreateRequestUser{
-		ClientUserId: os.Getenv("USER_ID"),
-	} // Replace with the actual user ID
-
-	// Specify the configuration for the Link token
-	request := plaid.NewLinkTokenCreateRequest("XAT", "en", []plaid.CountryCode{plaid.COUNTRYCODE_US}, user)
-	request.SetProducts([]plaid.Products{plaid.PRODUCTS_AUTH, plaid.PRODUCTS_TRANSACTIONS})
-	//request.SetWebhook("https://webhook-uri.com")
-	request.SetAccountFilters(plaid.LinkTokenAccountFilters{
-		Depository: &plaid.DepositoryFilter{
-			AccountSubtypes: []plaid.AccountSubtype{
-				plaid.ACCOUNTSUBTYPE_CHECKING,
-				plaid.ACCOUNTSUBTYPE_SAVINGS,
-			},
-		},
-	})
-	request.SetRedirectUri("http://localhost:3000/assets/oauth-after-party.html")
-
-	// Create the Link token
-	resp, _, err := client.PlaidApi.LinkTokenCreate(r.Context()).LinkTokenCreateRequest(*request).Execute()
+	linkToken, err := h.plaid.LinkBank(r)
 	if err != nil {
-		return utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error generating plaidCtl client: %v", err))
+		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error retrieving link token: %v", err))
 	}
-	linkToken := resp.GetLinkToken()
 	// Print the Link token
 	fmt.Println("Link token:", linkToken)
 	data := map[string]interface{}{
