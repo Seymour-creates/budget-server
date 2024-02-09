@@ -49,14 +49,14 @@ func (s *Server) registerRoutes() {
 	fs := http.FileServer(http.Dir("./internal/assets"))
 	s.mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
-	s.mux.HandleFunc("/get_summary", utils.ErrorHandler(s.handler.GetExpensesSummary))
-	s.mux.HandleFunc("/get_compare", utils.ErrorHandler(s.handler.GetCompare))
+	s.mux.HandleFunc("/get_expenses", utils.ErrorHandler(s.handler.GetExpensesSummary))
+	s.mux.HandleFunc("/get_compare", utils.ErrorHandler(s.handler.GetForecastAndExpenses))
 	s.mux.HandleFunc("/post_expense", utils.ErrorHandler(s.handler.PostExpense))
 	s.mux.HandleFunc("/post_forecast", utils.ErrorHandler(s.handler.PostForecast))
-	s.mux.HandleFunc("/link_cheddar", utils.ErrorHandler(s.handler.LinkBank))
+	s.mux.HandleFunc("/link_user_account", utils.ErrorHandler(s.handler.LinkBank))
 	s.mux.HandleFunc("/main", utils.ErrorHandler(s.handler.GetRight))
-	s.mux.HandleFunc("/create_item", utils.ErrorHandler(s.handler.CreateItem))
-	s.mux.HandleFunc("/refresh_expense_data", utils.ErrorHandler(s.handler.UpdateExpenseData))
+	s.mux.HandleFunc("/create_plaid_item", utils.ErrorHandler(s.handler.CreatePlaidBankItem))
+	s.mux.HandleFunc("/refresh_expenses_via_plaid", utils.ErrorHandler(s.handler.UpdateExpenseData))
 	// ... other routes
 }
 

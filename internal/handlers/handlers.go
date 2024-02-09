@@ -15,18 +15,18 @@ import (
 	"github.com/plaid/plaid-go/plaid"
 )
 
-var client *plaid.APIClient
-
 type Handler struct {
 	plaid *plaidCtl.Service
 	db    db.Repository
 }
 
+// MakeNewHttpHandler returns instance of Handler struct.
 func MakeNewHttpHandler(plaidClient *plaidCtl.Service, repo db.Repository) *Handler {
 	return &Handler{plaid: plaidClient, db: repo}
 }
 
-func (h *Handler) GetCompare(w http.ResponseWriter, r *http.Request) error {
+// GetForecastAndExpenses returns types.MonthlyBudgetInsights struct. ({ []types.Forecast, []types.Expense })
+func (h *Handler) GetForecastAndExpenses(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method Not Allowed")
 	}
@@ -39,6 +39,7 @@ func (h *Handler) GetCompare(w http.ResponseWriter, r *http.Request) error {
 	return utils.WriteJSON(w, response)
 }
 
+// GetExpensesSummary Returns []types.Expense for the month from db.
 func (h *Handler) GetExpensesSummary(w http.ResponseWriter, r *http.Request) error {
 	now := time.Now()
 	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
@@ -52,6 +53,7 @@ func (h *Handler) GetExpensesSummary(w http.ResponseWriter, r *http.Request) err
 	return utils.WriteJSON(w, expenses)
 }
 
+// PostForecast Post CLI user input of types.Forecast into db.
 func (h *Handler) PostForecast(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method Not Allowed")
@@ -73,6 +75,7 @@ func (h *Handler) GetRight(w http.ResponseWriter, r *http.Request) error {
 	return utils.WriteJSON(w, map[string]string{"status": "success"})
 }
 
+// PostExpense Post CLI user input of types.Expense in to db.
 func (h *Handler) PostExpense(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method Not Allowed")
@@ -90,11 +93,12 @@ func (h *Handler) PostExpense(w http.ResponseWriter, r *http.Request) error {
 	return utils.WriteJSON(w, map[string]string{"status": "success"})
 }
 
+// LinkBank returns HTMX page to register users bank using Plaid Link
 func (h *Handler) LinkBank(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodGet {
 		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method not allowed.")
 	}
-	client = h.plaid.Client
+	client := h.plaid.Client
 
 	// Specify the user
 	user := plaid.LinkTokenCreateRequestUser{
@@ -130,14 +134,15 @@ func (h *Handler) LinkBank(w http.ResponseWriter, r *http.Request) error {
 	return tmpl.Execute(w, data)
 }
 
-func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) error {
+// CreatePlaidBankItem links users bank to APP in plaid - returns token for plaid client
+func (h *Handler) CreatePlaidBankItem(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method not allowed.")
 	}
 	if err := r.ParseForm(); err != nil {
 		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error parsing incoming form: %v", err))
 	}
-	client = h.plaid.Client
+	client := h.plaid.Client
 	publicToken := r.FormValue("public_token")
 	errorMessage := r.FormValue("error_message")
 
@@ -155,6 +160,7 @@ func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) error {
 	return utils.WriteJSON(w, accessToken)
 }
 
+// UpdateExpenseData retrieves bank transaction data from plaid & posts to db - responds with success
 func (h *Handler) UpdateExpenseData(w http.ResponseWriter, r *http.Request) error {
 	fetchedTransactions, err := h.plaid.RetrieveTransactions(r)
 	if err != nil {
