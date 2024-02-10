@@ -16,6 +16,4 @@ func main() {
 	if err := srv.Run(port); err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
-
-	log.Printf("Server running on port %v", port)
 }
