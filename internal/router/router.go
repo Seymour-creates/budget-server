@@ -27,7 +27,7 @@ func createNewPlaidClient() *plaid.APIClient {
 	clientOptions.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
 
 	// Use plaidCtl.Development or plaidCtl.Production depending on your environment
-	clientOptions.UseEnvironment(plaid.Production)
+	clientOptions.UseEnvironment(plaid.Sandbox)
 	return plaid.NewAPIClient(clientOptions)
 }
 
@@ -59,6 +59,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/link_user_account", utils.ErrorHandler(s.handler.LinkBank))
 	s.mux.HandleFunc("/main", utils.ErrorHandler(s.handler.GetRight))
 	s.mux.HandleFunc("/create_plaid_item", utils.ErrorHandler(s.handler.CreatePlaidBankItem))
+	s.mux.HandleFunc("/oauth_after", utils.ErrorHandler(s.handler.OauthRedirect))
 	s.mux.HandleFunc("/refresh_expenses_via_plaid", utils.ErrorHandler(s.handler.UpdateExpenseData))
 	// ... other routes
 }
@@ -67,7 +68,9 @@ func (s *Server) Run(port string) error {
 	ctx := context.Background()
 
 	// Set up ngrok configuration and start a tunnel
-	ngrokConfig := config.HTTPEndpoint()
+	ngrokConfig := config.HTTPEndpoint(
+		config.WithDomain(os.Getenv("DOMAIN")),
+	)
 
 	// Authenticate with ngrok using your auth token stored in an environment variable
 	listener, err := ngrok.Listen(ctx, ngrokConfig, ngrok.WithAuthtoken(os.Getenv("NGROK_AUTH_TOKEN")))
@@ -79,8 +82,7 @@ func (s *Server) Run(port string) error {
 	// Log the public ngrok URL
 	log.Printf("ngrok tunnel started: %s", listener.URL())
 	_ = os.Setenv("LOCAL_URL", listener.URL())
-	// Start your HTTP server using the ngrok listener instead of ListenAndServe
-	// Note: Depending on your setup, you might need to adapt how your server is started
+
 	return http.Serve(listener, s.mux)
 	//return http.ListenAndServe(port, s.mux)
 }

@@ -6,12 +6,13 @@ import (
 	"github.com/Seymour-creates/budget-server/internal/db"
 	"github.com/Seymour-creates/budget-server/internal/plaidCtl"
 	"html/template"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Seymour-creates/budget-server/internal/types"
 	"github.com/Seymour-creates/budget-server/internal/utils"
-	"github.com/plaid/plaid-go/plaid"
 )
 
 type Handler struct {
@@ -102,13 +103,27 @@ func (h *Handler) LinkBank(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error retrieving link token: %v", err))
 	}
-	// Print the Link token
-	fmt.Println("Link token:", linkToken)
+
 	data := map[string]interface{}{
 		"LinkToken": linkToken,
+		"APP_URL":   os.Getenv("APP_URL"),
 	}
 	tmpl := template.Must(template.ParseFiles("internal/templates/link_bank.html"))
 	return tmpl.Execute(w, data)
+}
+
+func (h *Handler) OauthRedirect(w http.ResponseWriter, r *http.Request) error {
+	publicToken := r.FormValue("public_token")
+	errorMsg := r.FormValue("error_message")
+	if errorMsg != "" {
+		return utils.NewHTTPError(http.StatusExpectationFailed, fmt.Sprintf("Error fetching public token from link: %v", errorMsg))
+	}
+	data := map[string]interface{}{
+		"PublicToken": publicToken,
+	}
+	tmpl := template.Must(template.ParseFiles("internal/templates/oauth-after.html"))
+	return tmpl.Execute(w, data)
+
 }
 
 // CreatePlaidBankItem links users bank to APP in plaid - returns token for plaid client
@@ -119,7 +134,6 @@ func (h *Handler) CreatePlaidBankItem(w http.ResponseWriter, r *http.Request) er
 	if err := r.ParseForm(); err != nil {
 		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error parsing incoming form: %v", err))
 	}
-	client := h.plaid.Client
 	publicToken := r.FormValue("public_token")
 	errorMessage := r.FormValue("error_message")
 
@@ -127,14 +141,14 @@ func (h *Handler) CreatePlaidBankItem(w http.ResponseWriter, r *http.Request) er
 		return utils.NewHTTPError(http.StatusExpectationFailed, fmt.Sprintf("Error fetching public token from link: %v", errorMessage))
 	}
 
-	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(publicToken)
-	exchangedToken, _, err := client.PlaidApi.ItemPublicTokenExchange(r.Context()).ItemPublicTokenExchangeRequest(*exchangePublicTokenReq).Execute()
+	accessToken, err := h.plaid.CreateItem(publicToken, r)
 	if err != nil {
 		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error exchanging public token for access token: %v", err))
 	}
 
-	accessToken := exchangedToken.GetAccessToken()
-	return utils.WriteJSON(w, accessToken)
+	log.Printf("#*#*#*# accessToken: %v", accessToken)
+
+	return utils.WriteJSON(w, map[string]string{"status": "success"})
 }
 
 // UpdateExpenseData retrieves bank transaction data from plaid & posts to db - responds with success

@@ -49,11 +49,10 @@ func (s *Service) RetrieveTransactions(r *http.Request) ([]plaid.Transaction, *t
 
 func (s *Service) LinkBank(r *http.Request) (string, error) {
 	client := s.Client
-
 	// Specify the user
 	user := plaid.LinkTokenCreateRequestUser{
-		ClientUserId: os.Getenv("USER_ID"),
-	} // Replace with the actual user ID
+		ClientUserId: os.Getenv("PLAID_CLIENT_ID"),
+	}
 
 	// Specify the configuration for the Link token
 	request := plaid.NewLinkTokenCreateRequest("XAT", "en", []plaid.CountryCode{plaid.COUNTRYCODE_US}, user)
@@ -67,43 +66,28 @@ func (s *Service) LinkBank(r *http.Request) (string, error) {
 			},
 		},
 	})
-	request.SetRedirectUri(os.Getenv("LOCAL_URL") + "/assets/oauth-after-party.html")
+	//request.SetRedirectUri(os.Getenv("LOCAL_URL") + "/assets/oauth-after.html")
+
+	request.SetRedirectUri(os.Getenv("APP_URL") + `/oauth_after`)
 
 	// Create the Link token
 	resp, _, err := client.PlaidApi.LinkTokenCreate(r.Context()).LinkTokenCreateRequest(*request).Execute()
 	if err != nil {
-		return "", utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error generating plaidCtl client: %v", err))
+		plaidErr, err := plaid.ToPlaidError(err)
+		return "", utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error generating plaidCtl client: %v & %v \n ######END LOG", plaidErr.ErrorMessage, err))
 	}
+
 	linkToken := resp.GetLinkToken()
+	log.Printf("link token: %v", linkToken)
 	return linkToken, nil
-	// Print the Link token
-	//fmt.Println("Link token:", linkToken)
-	//data := map[string]interface{}{
-	//	"LinkToken": linkToken,
-	//}
-	//tmpl := template.Must(template.ParseFiles("internal/templates/link_bank.html"))
-	//return tmpl.Execute(w, data)
 }
 
-func (s *Service) CreateItem(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != http.MethodPost {
-		return utils.NewHTTPError(http.StatusMethodNotAllowed, "Method not allowed.")
-	}
-	if err := r.ParseForm(); err != nil {
-		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error parsing incoming form: %v", err))
-	}
-	client := s.Client
-	publicToken := r.FormValue("public_token")
-	errorMessage := r.FormValue("error_message")
-
-	if errorMessage != "" {
-		return utils.NewHTTPError(http.StatusExpectationFailed, fmt.Sprintf("Error fetching public token from link: %v", errorMessage))
-	}
+func (s *Service) CreateItem(publicToken string, r *http.Request) (string, error) {
 
 	exchangePublicTokenReq := plaid.NewItemPublicTokenExchangeRequest(publicToken)
-	exchangedToken, _, err := client.PlaidApi.ItemPublicTokenExchange(r.Context()).ItemPublicTokenExchangeRequest(*exchangePublicTokenReq).Execute()
+	exchangedToken, _, err := s.Client.PlaidApi.ItemPublicTokenExchange(r.Context()).ItemPublicTokenExchangeRequest(*exchangePublicTokenReq).Execute()
 	if err != nil {
-		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error exchanging public token for access token: %v", err))
+		return "", utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error exchanging public token for access token: %v", err))
 	}
 
 	accessToken := exchangedToken.GetAccessToken()
@@ -111,7 +95,7 @@ func (s *Service) CreateItem(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		log.Printf("Unable to update access token in env file: %v", err)
 	}
-	return utils.WriteJSON(w, map[string]string{"status": "success"})
+	return accessToken, nil
 }
 
 func getBudgetCategory(plaidCategory string) string {

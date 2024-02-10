@@ -10,7 +10,6 @@ import (
 
 func WriteError(w http.ResponseWriter, httpErr *types.HTTPError) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(httpErr.StatusCode)
 	if err := json.NewEncoder(w).Encode(httpErr); err != nil {
 		log.Printf("error writing error response: %v", err)
 	}

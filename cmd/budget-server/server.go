@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	log.Printf("stating server!!!!")
 	port := os.Getenv("PORT")
 	log.Printf("port: %v", port)
 	srv := router.ConfigServer()
