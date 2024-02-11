@@ -36,12 +36,6 @@
             <button id="link-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded">
                 Connect with Plaid
             </button>
-            <button id="post-token" class="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded"
-                hx-post="/create_item"
-                hx-include="#plaid-container"
-                hx-swap="outerHTML">
-                Post PubToken
-            </button>
             <div id="plaid-container">
                 <input type="hidden" name="public_token" id="public-token" value="">
                 <input type="hidden" name="error_message" id="error_message" value="">
@@ -63,14 +57,11 @@
 
 
 <script type="text/javascript">
+    var APP_URL = "{{.APP_URL}}";
     var linkHandler = Plaid.create({
         token: "{{.LinkToken}}", // Replace with the link token from your server
-        // receivedRedirectUri: window.location.href,
         onSuccess: function(public_token, metadata) {
-            // Set the public_token in the form
-            document.getElementById("public-token").value = public_token;
-            // Submit the form with HTMX
-            document.getElementById("post-token").click()
+            window.location.href = `${APP_URL}/oauth_after?public_token=${public_token}`
         },
         onExit: function(err, metadata) {
             // Handle the error or the exit event
