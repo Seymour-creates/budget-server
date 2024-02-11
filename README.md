@@ -16,3 +16,7 @@ cd budget-server
 
 # run the server using docker-compose command from root
 docker-compose up -d --build
+
+
+## Notes
+# ensure init-db & wait-for-mysql are executable on host machine.

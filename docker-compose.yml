@@ -10,3 +10,18 @@ services:
       - configs/dev.env
     volumes:
       - .:/app
+    depends_on:
+      - db
+  db:
+    env_file:
+      - configs/dev.env
+    ports:
+      - "3306:3306"
+    build:
+      context: .
+      dockerfile: configs/db.Dockerfile
+    volumes:
+      - budget_data:/var/lib/mysql
+volumes:
+  budget_data:
+    driver: local

@@ -32,7 +32,7 @@ func createNewPlaidClient() *plaid.APIClient {
 }
 
 func ConfigServer() *Server {
-	mysqlConn, err := sql.Open("mysql", "yourdatasource")
+	mysqlConn, err := sql.Open("mysql", os.Getenv("DSN"))
 	if err != nil {
 		log.Printf("error connecting to db: %v", err)
 	}

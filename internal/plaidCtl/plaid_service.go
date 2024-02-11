@@ -98,6 +98,21 @@ func (s *Service) CreateItem(publicToken string, r *http.Request) (string, error
 	return accessToken, nil
 }
 
+func (s *Service) FormatTransactionsToExpenseType(transactions []plaid.Transaction) ([]types.Expense, *types.HTTPError) {
+	var expenses []types.Expense
+	for _, action := range transactions {
+		log.Printf("category: %v, name: %v, date: %v, big amount: %v", action.Category, action.Name, action.Date, action.Amount)
+		date, err := time.Parse("2006-01-02", action.Date)
+		// need to find way to intelligently sort expenses into appropriate categories
+		if err != nil {
+			return nil, utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error parsing date: %v", err))
+		}
+		category := cPlaidCategoryToExpense(action.Category)
+		expenses = append(expenses, types.Expense{Description: action.Name, Date: date, Category: category, Amount: float64(action.Amount)})
+	}
+	return expenses, nil
+}
+
 func getBudgetCategory(plaidCategory string) string {
 	categoryMappings := map[string]string{
 		"INCOME":                    "saving",
@@ -137,19 +152,4 @@ func cPlaidCategoryToExpense(category []string) string {
 		}
 	}
 	return "misc"
-}
-
-func (s *Service) FormatTransactionsToExpenseType(transactions []plaid.Transaction) ([]types.Expense, *types.HTTPError) {
-	var expenses []types.Expense
-	for _, action := range transactions {
-		log.Printf("category: %v, name: %v, date: %v, big amount: %v", action.Category, action.Name, action.Date, action.Amount)
-		date, err := time.Parse("2006-01-02", action.Date)
-		// need to find way to intelligently sort expenses into appropriate categories
-		if err != nil {
-			return nil, utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error parsing date: %v", err))
-		}
-		category := cPlaidCategoryToExpense(action.Category)
-		expenses = append(expenses, types.Expense{Description: action.Name, Date: date, Category: category, Amount: float64(action.Amount)})
-	}
-	return expenses, nil
 }
