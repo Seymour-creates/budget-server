@@ -49,7 +49,6 @@ func (h *Handler) GetExpensesSummary(w http.ResponseWriter, r *http.Request) err
 	if err != nil {
 		return err
 	}
-
 	return utils.WriteJSON(w, expenses)
 }
 

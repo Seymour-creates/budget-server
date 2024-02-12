@@ -69,6 +69,7 @@ func (s *Server) Run(port string) error {
 
 	// Set up ngrok configuration and start a tunnel
 	ngrokConfig := config.HTTPEndpoint(
+		config.WithBasicAuth(os.Getenv("AUTH_USER"), os.Getenv("AUTH_USER_PASS")),
 		config.WithDomain(os.Getenv("DOMAIN")),
 	)
 
