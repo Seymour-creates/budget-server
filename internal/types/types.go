@@ -33,3 +33,8 @@ type HTTPError struct {
 func (e *HTTPError) Error() string {
 	return e.Message
 }
+
+type DateRange struct {
+	FromDate string `json:"fromDate"`
+	ToDate   string `json:"toDate"`
+}

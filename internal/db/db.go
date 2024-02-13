@@ -19,8 +19,9 @@ func NewDBManager(db *sql.DB) *Manager {
 	return &Manager{db: db}
 }
 
-func (man *Manager) FetchExpenses(start, end time.Time) ([]types.Expense, *types.HTTPError) {
+func (man *Manager) FetchExpenses(start, end string) ([]types.Expense, *types.HTTPError) {
 	const query = `SELECT categoryID, amount, date, description FROM expenses WHERE date >= ? AND date <= ?`
+
 	rows, err := man.db.Query(query, start, end)
 	if err != nil {
 		return nil, utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("error fetching expenses: %v", err))
@@ -31,7 +32,6 @@ func (man *Manager) FetchExpenses(start, end time.Time) ([]types.Expense, *types
 			log.Printf("error closing row: %v", err)
 		}
 	}(rows)
-
 	var expenses []types.Expense
 	for rows.Next() {
 		var exp types.Expense
@@ -45,10 +45,11 @@ func (man *Manager) FetchExpenses(start, end time.Time) ([]types.Expense, *types
 		}
 		expenses = append(expenses, exp)
 	}
-	if err = rows.Err(); err != nil {
+
+	err = rows.Err()
+	if err != nil {
 		return nil, utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("error iterating expenses rows: %v", err))
 	}
-
 	return expenses, nil
 }
 
@@ -85,7 +86,7 @@ func (man *Manager) GetMonthlyBudgetInsights() (*types.MonthlyBudgetInsights, *t
 	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
-	expenses, err := man.FetchExpenses(firstOfMonth, lastOfMonth)
+	expenses, err := man.FetchExpenses(firstOfMonth.Format("2006-01-02"), lastOfMonth.Format("2006-01-02"))
 	if err != nil {
 		return nil, err
 	}

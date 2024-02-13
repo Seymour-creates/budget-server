@@ -5,7 +5,7 @@ FROM mysql:8.0.35
 COPY configs/init-db.sh /docker-entrypoint-initdb.d/
 
 ## Copy the SQL file to the container
-#COPY configs/export.sql /docker-entrypoint-initdb.d/
+COPY configs/export.sql /docker-entrypoint-initdb.d/
 
 # Make sure the script is executable
 RUN chmod +x /docker-entrypoint-initdb.d/init-db.sh

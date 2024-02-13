@@ -6,7 +6,7 @@ import (
 )
 
 type Repository interface {
-	FetchExpenses(start, end time.Time) ([]types.Expense, *types.HTTPError)
+	FetchExpenses(start, end string) ([]types.Expense, *types.HTTPError)
 	FetchForecast(period time.Time) ([]types.Forecast, *types.HTTPError)
 	GetMonthlyBudgetInsights() (*types.MonthlyBudgetInsights, *types.HTTPError)
 	InsertExpenses(expenses []types.Expense) *types.HTTPError

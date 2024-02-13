@@ -27,8 +27,9 @@ func ErrorHandler(f types.APIFunc) http.HandlerFunc {
 			var httpErr *types.HTTPError
 			if errors.As(err, &httpErr) {
 				WriteError(w, httpErr)
+				return
 			}
-			log.Printf("########ERROR: %v", err)
+			log.Printf("#########ERROR: %v", err)
 			WriteError(w, NewHTTPError(http.StatusInternalServerError, err.Error()))
 		}
 	}

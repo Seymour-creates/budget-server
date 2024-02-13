@@ -6,6 +6,7 @@ import (
 	"github.com/Seymour-creates/budget-server/internal/db"
 	"github.com/Seymour-creates/budget-server/internal/plaidCtl"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -41,15 +42,43 @@ func (h *Handler) GetForecastAndExpenses(w http.ResponseWriter, r *http.Request)
 
 // GetExpensesSummary Returns []types.Expense for the month from db.
 func (h *Handler) GetExpensesSummary(w http.ResponseWriter, r *http.Request) error {
-	now := time.Now()
-	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+	fromDate, toDate, _ := decodeDateRange(r)
+	expenses, err := h.db.FetchExpenses(fromDate, toDate)
 
-	expenses, err := h.db.FetchExpenses(firstOfMonth, lastOfMonth)
 	if err != nil {
-		return err
+		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error retreiving expense data from db: %v", err))
 	}
 	return utils.WriteJSON(w, expenses)
+}
+
+func decodeDateRange(r *http.Request) (string, string, error) {
+	var dateRange types.DateRange
+	err := json.NewDecoder(r.Body).Decode(&dateRange)
+	if err != nil {
+		if err != io.EOF {
+			// Log the error or handle it as needed
+			return "", "", utils.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("error decoding json in request GetExpensesSummary(): %v", err))
+		}
+		// If err is io.EOF, consider it as empty body and proceed with defaults
+		err = nil
+	}
+
+	now := time.Now()
+	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+	lastOfMonth := time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 999999999, now.Location()).Format("2006-01-02")
+
+	// Use provided dates or defaults if empty
+	fromDate := firstOfMonth
+	if dateRange.FromDate != "" {
+		fromDate = dateRange.FromDate
+	}
+
+	toDate := lastOfMonth
+	if dateRange.ToDate != "" {
+		toDate = dateRange.ToDate
+	}
+
+	return fromDate, toDate, nil
 }
 
 // PostForecast Post CLI user input of types.Forecast into db.
@@ -64,7 +93,7 @@ func (h *Handler) PostForecast(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if err := h.db.InsertForecast(forecast); err != nil {
-		return err
+		return utils.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Error posting forecast data in db: %v", err))
 	}
 
 	return utils.WriteJSON(w, map[string]string{"status": "success"})
