@@ -27,7 +27,7 @@ func createNewPlaidClient() *plaid.APIClient {
 	clientOptions.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
 
 	// Use plaidCtl.Development or plaidCtl.Production depending on your environment
-	clientOptions.UseEnvironment(plaid.Sandbox)
+	clientOptions.UseEnvironment(plaid.Development)
 	return plaid.NewAPIClient(clientOptions)
 }
 
