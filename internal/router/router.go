@@ -61,6 +61,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("/create_plaid_item", utils.ErrorHandler(s.handler.CreatePlaidBankItem))
 	s.mux.HandleFunc("/oauth_after", utils.ErrorHandler(s.handler.OauthRedirect))
 	s.mux.HandleFunc("/refresh_expenses_via_plaid", utils.ErrorHandler(s.handler.UpdateExpenseData))
+	s.mux.HandleFunc("/verify_month_forecast", utils.ErrorHandler(s.handler.VerifyMonthForecast))
 	// ... other routes
 }
 

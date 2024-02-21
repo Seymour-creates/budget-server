@@ -123,3 +123,8 @@ func (man *Manager) InsertForecast(forecast []types.Forecast) *types.HTTPError {
 	}
 	return nil
 }
+
+func (man *Manager) VerifyForecast() *types.HTTPError {
+	const forecastQuery = "SELECT * FROM forecast"
+	return nil
+}

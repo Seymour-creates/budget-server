@@ -25,8 +25,9 @@ func NewService(client *plaid.APIClient) *Service {
 func (s *Service) RetrieveTransactions(r *http.Request) ([]plaid.Transaction, *types.HTTPError) {
 	log.Printf("access token used for req: %v", os.Getenv("PLAID_ACCESS_TOKEN"))
 	const dateFormat = "2006-01-02"
-	currentMo := time.Now()
-	startDate := time.Date(currentMo.Year(), currentMo.Month(), 1, 0, 0, 0, 0, currentMo.Location()).Format(dateFormat)
+	//currentMo := time.Now()
+	//startDate := time.Date(currentMo.Year(), currentMo.Month(), 1, 0, 0, 0, 0, currentMo.Location()).Format(dateFormat)
+	startDate := time.Now().Format(dateFormat)
 	endDate := time.Now().Format(dateFormat)
 	isTrue := true
 	request := plaid.NewTransactionsGetRequest(os.Getenv("PLAID_ACCESS_TOKEN"), startDate, endDate)

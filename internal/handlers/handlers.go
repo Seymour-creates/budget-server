@@ -198,3 +198,8 @@ func (h *Handler) UpdateExpenseData(w http.ResponseWriter, r *http.Request) erro
 	}
 	return utils.WriteJSON(w, success)
 }
+
+func (h *Handler) VerifyMonthForecast(w http.ResponseWriter, r *http.Request) error {
+
+	return nil
+}
